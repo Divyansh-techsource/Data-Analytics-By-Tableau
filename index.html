@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>Housing Market Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  --navy: #0f1b3d;
+  --indigo: #2a3fa0;
+  --blue: #4a5cf7;
+  --blue-light: #7b8fff;
+  --accent: #f0c048;
+  --accent-warm: #ff7f50;
+  --surface: #ffffff;
+  --surface-2: #f5f7ff;
+  --surface-3: #eef1ff;
+  --text-primary: #0f1b3d;
+  --text-secondary: #5a6480;
+  --text-muted: #8a93b0;
+  --border: rgba(74, 92, 247, 0.12);
+  --shadow-sm: 0 2px 12px rgba(15, 27, 61, 0.06);
+  --shadow-md: 0 8px 32px rgba(15, 27, 61, 0.10);
+  --shadow-lg: 0 20px 60px rgba(15, 27, 61, 0.14);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ===== NOISE TEXTURE OVERLAY ===== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 60px;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: box-shadow var(--transition);
+}
+
+.navbar:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--navy);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: var(--blue);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(74, 92, 247, 0.18);
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  padding: 8px 16px;
+  border-radius: 40px;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.navbar a:hover {
+  color: var(--blue);
+  background: rgba(74, 92, 247, 0.08);
+}
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: 92vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 80px 80px 80px;
+  background: var(--navy);
+  overflow: hidden;
+}
+
+/* Geometric background shapes */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(74, 92, 247, 0.35) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -150px;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(240, 192, 72, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* Grid lines */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 580px;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(240, 192, 72, 0.15);
+  border: 1px solid rgba(240, 192, 72, 0.3);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 7px 16px;
+  border-radius: 40px;
+  margin-bottom: 28px;
+  animation: fadeInUp 0.6s ease both;
+}
+
+.hero-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.hero-text h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 58px;
+  line-height: 1.15;
+  color: #ffffff;
+  letter-spacing: -1.5px;
+  margin-bottom: 20px;
+  animation: fadeInUp 0.7s 0.1s ease both;
+}
+
+.hero-text h1 em {
+  font-style: italic;
+  color: var(--blue-light);
+}
+
+.hero-text p {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 17px;
+  font-weight: 300;
+  max-width: 420px;
+  margin-bottom: 36px;
+  line-height: 1.7;
+  animation: fadeInUp 0.7s 0.2s ease both;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  animation: fadeInUp 0.7s 0.3s ease both;
+}
+
+.hero-btn {
+  padding: 14px 30px;
+  background: var(--blue);
+  border: none;
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: 0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  border-radius: inherit;
+}
+
+.hero-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(74, 92, 247, 0.5);
+  background: var(--blue-light);
+}
+
+.hero-btn-ghost {
+  padding: 14px 28px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.hero-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Stats floating cards */
+.hero-stats {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeInRight 0.8s 0.4s ease both;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 20px 28px;
+  border-radius: var(--radius);
+  min-width: 220px;
+  transition: all var(--transition);
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.11);
+  transform: translateX(-6px);
+  border-color: rgba(74, 92, 247, 0.4);
+}
+
+.stat-card .stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 6px;
+}
+
+.stat-card .stat-value {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  color: white;
+  letter-spacing: -1px;
+}
+
+.stat-card .stat-change {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4ade80;
+  margin-top: 4px;
+}
+
+.stat-card .stat-change.down { color: #f87171; }
+
+/* ===== SECTIONS ===== */
+.section {
+  padding: 100px 80px;
+  text-align: center;
+}
+
+.section-label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue);
+  background: rgba(74, 92, 247, 0.08);
+  padding: 6px 16px;
+  border-radius: 40px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(74, 92, 247, 0.15);
+}
+
+.section h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 42px;
+  letter-spacing: -1px;
+  color: var(--navy);
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 300;
+  max-width: 480px;
+  margin: 0 auto 52px;
+  line-height: 1.7;
+}
+
+/* ===== VIZ CONTAINER ===== */
+.viz-container {
+  background: var(--surface);
+  padding: 10px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  margin: auto;
+  max-width: 1200px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow var(--transition);
+}
+
+.viz-container:hover {
+  box-shadow: 0 28px 70px rgba(15, 27, 61, 0.16);
+}
+
+.viz-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue), var(--blue-light), var(--accent));
+  z-index: 1;
+}
+
+/* ===== TEAM SECTION ===== */
+.team {
+  padding: 100px 80px;
+  background: var(--surface);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.team::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(74, 92, 247, 0.05) 0%, transparent 70%);
+}
+
+.team-container {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.team-card {
+  background: var(--surface-2);
+  padding: 32px 24px;
+  border-radius: var(--radius-lg);
+  width: 210px;
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.team-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(74, 92, 247, 0.04), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.team-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(74, 92, 247, 0.25);
+  background: var(--surface);
+}
+
+.team-card:hover::before { opacity: 1; }
+
+.team-card-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 18px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  color: white;
+  box-shadow: 0 8px 20px rgba(74, 92, 247, 0.3);
+  position: relative;
+}
+
+.team-card-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid rgba(74, 92, 247, 0.2);
+}
+
+.team-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 6px;
+  letter-spacing: -0.2px;
+}
+
+.team-card p {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--blue);
+  background: rgba(74, 92, 247, 0.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: inline-block;
+  letter-spacing: 0.01em;
+}
+
+/* ===== CONTACT SECTION ===== */
+.contact {
+  padding: 100px 80px;
+  text-align: center;
+  background: var(--navy);
+  position: relative;
+  overflow: hidden;
+}
+
+.contact::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(74, 92, 247, 0.2) 0%, transparent 65%);
+}
+
+.contact h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 42px;
+  letter-spacing: -1px;
+  color: white;
+  margin-bottom: 50px;
+  position: relative;
+}
+
+.contact-container {
+  max-width: 580px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 44px 48px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  text-align: left;
+  position: relative;
+}
+
+.contact-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--accent));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.contact-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.contact-row:last-child { border-bottom: none; }
+
+.contact-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(74, 92, 247, 0.2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.contact-detail .label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 3px;
+}
+
+.contact-detail .value {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.contact a {
+  color: var(--blue-light);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+
+.contact a:hover { color: white; text-decoration: underline; }
+
+/* ===== FOOTER ===== */
+.footer {
+  background: #07111f;
+  padding: 24px 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.footer p {
+  color: rgba(255,255,255,0.3);
+  font-size: 13px;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== SCROLL REVEAL ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .hero { flex-direction: column; padding: 60px 40px; gap: 50px; text-align: center; }
+  .hero-text h1 { font-size: 42px; }
+  .hero-text p { max-width: 100%; margin-left: auto; margin-right: auto; }
+  .hero-actions { justify-content: center; }
+  .hero-stats { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .stat-card { min-width: 160px; }
+  .section, .team, .contact { padding: 70px 40px; }
+  .navbar { padding: 0 30px; }
+}
+
+@media (max-width: 640px) {
+  .navbar ul { display: none; }
+  .hero-text h1 { font-size: 32px; }
+  .section h2, .contact h2 { font-size: 30px; }
+  .section, .team, .contact, .footer { padding: 60px 24px; }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="logo">Housing Analytics</div>
+  <ul>
+    <li><a href="#">Home</a></li>
+    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="#story">Story</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+
+  <div class="hero-content">
+    <div class="hero-tag">Data Analytics · 2025</div>
+    <div class="hero-text">
+      <h1>Housing Market<br><em>Trends & Insights</em></h1>
+      <p>Comprehensive analysis of sale prices and property features using interactive Tableau visualizations.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="hero-btn" onclick="scrollToDashboard()">Explore Dashboard →</button>
+      <button class="hero-btn-ghost" onclick="document.getElementById('story').scrollIntoView({behavior:'smooth'})">View Story</button>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-label">Avg. Sale Price</div>
+      <div class="stat-value">$340K</div>
+      <div class="stat-change">↑ 8.4% YoY</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Properties Analyzed</div>
+      <div class="stat-value">2,400+</div>
+      <div class="stat-change">↑ 12% this quarter</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg. Days on Market</div>
+      <div class="stat-value">28</div>
+      <div class="stat-change down">↓ 6 days vs last year</div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="section reveal">
+  <div class="section-label">Interactive Visualization</div>
+  <h2>Housing Market Dashboard</h2>
+  <p class="section-subtitle">Explore price trends, property features, and neighborhood comparisons in real time.</p>
+
+  <div class="viz-container">
+    <div class='tableauPlaceholder' id='viz1772945633888' style='position: relative'><noscript><a href='#'><img alt='Dashboard 1 ' src='https://public.tableau.com/static/images/Da/DataAnalyticsByTableauStory/Dashboard1/1_rss.png' style='border: none' /></a></noscript><object class='tableauViz' style='display:none;'><param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /><param name='embed_code_version' value='3' /><param name='site_root' value='' /><param name='name' value='DataAnalyticsByTableauStory/Dashboard1' /><param name='tabs' value='no' /><param name='toolbar' value='yes' /><param name='static_image' value='https://public.tableau.com/static/images/Da/DataAnalyticsByTableauStory/Dashboard1/1.png' /><param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' /><param name='display_spinner' value='yes' /><param name='display_overlay' value='yes' /><param name='display_count' value='yes' /><param name='language' value='en-US' /><param name='filter' value='publish=yes' /></object></div>
+    <script type='text/javascript'>
+      var divElement = document.getElementById('viz1772945633888');
+      var vizElement = divElement.getElementsByTagName('object')[0];
+      if (divElement.offsetWidth > 800) { vizElement.style.width='100%'; vizElement.style.height=(divElement.offsetWidth*0.75)+'px'; }
+      else if (divElement.offsetWidth > 500) { vizElement.style.width='100%'; vizElement.style.height=(divElement.offsetWidth*0.75)+'px'; }
+      else { vizElement.style.width='100%'; vizElement.style.height='1277px'; }
+      var scriptElement = document.createElement('script');
+      scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+      vizElement.parentNode.insertBefore(scriptElement, vizElement);
+    </script>
+  </div>
+</section>
+
+<!-- STORY -->
+<section id="story" class="section reveal" style="background: var(--surface);">
+  <div class="section-label">Narrative Analysis</div>
+  <h2>Housing Market Story</h2>
+  <p class="section-subtitle">A guided walkthrough of key findings, trends, and data-driven insights.</p>
+
+  <div class="viz-container">
+    <div class='tableauPlaceholder' id='viz1772945671341' style='position: relative'><noscript><a href='#'><img alt='Story 1 ' src='https://public.tableau.com/static/images/Da/DataAnalyticsByTableauStory/Story1/1_rss.png' style='border: none' /></a></noscript><object class='tableauViz' style='display:none;'><param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /><param name='embed_code_version' value='3' /><param name='site_root' value='' /><param name='name' value='DataAnalyticsByTableauStory/Story1' /><param name='tabs' value='no' /><param name='toolbar' value='yes' /><param name='static_image' value='https://public.tableau.com/static/images/Da/DataAnalyticsByTableauStory/Story1/1.png' /><param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' /><param name='display_spinner' value='yes' /><param name='display_overlay' value='yes' /><param name='display_count' value='yes' /><param name='language' value='en-US' /><param name='filter' value='publish=yes' /></object></div>
+    <script type='text/javascript'>
+      var divElement = document.getElementById('viz1772945671341');
+      var vizElement = divElement.getElementsByTagName('object')[0];
+      vizElement.style.width='1016px'; vizElement.style.height='991px';
+      var scriptElement = document.createElement('script');
+      scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+      vizElement.parentNode.insertBefore(scriptElement, vizElement);
+    </script>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team" class="team reveal">
+  <div class="section-label">The People Behind It</div>
+  <h2>Our Team</h2>
+  <p class="section-subtitle" style="margin: 0 auto 52px;">A group of passionate analysts and developers.</p>
+
+  <div class="team-container">
+    <div class="team-card">
+      <div class="team-card-avatar">DK</div>
+      <h3>Divyansh Kaushik</h3>
+      <p>Dashboard Developer</p>
+    </div>
+    <div class="team-card">
+      <div class="team-card-avatar">DS</div>
+      <h3>Dhruv Singhal</h3>
+      <p>Data Cleaning</p>
+    </div>
+    <div class="team-card">
+      <div class="team-card-avatar">KY</div>
+      <h3>Kripashanker Yadav</h3>
+      <p>Visualization</p>
+    </div>
+    <div class="team-card">
+      <div class="team-card-avatar">GK</div>
+      <h3>Gaurav Kumar</h3>
+      <p>Storyboarding</p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="contact reveal">
+  <h2>Get In Touch</h2>
+
+  <div class="contact-container">
+    <div class="contact-row">
+      <div class="contact-icon">📊</div>
+      <div class="contact-detail">
+        <div class="label">Project</div>
+        <div class="value">Housing Market Analysis using Tableau</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="contact-icon">✉️</div>
+      <div class="contact-detail">
+        <div class="label">Email</div>
+        <div class="value"><a href="mailto:divyansh.2428cs1368@kiet.edu">divyansh.2428cs1368@kiet.edu</a></div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="contact-icon">🐙</div>
+      <div class="contact-detail">
+        <div class="label">GitHub</div>
+        <div class="value"><a href="https://github.com/Divyansh-techsource" target="_blank">github.com/Divyansh-techsource</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>© 2025 Housing Analytics · Built with Tableau</p>
+  <p>KIET Group of Institutions</p>
+</footer>
+
+<script>
+function scrollToDashboard() {
+  document.getElementById("dashboard").scrollIntoView({ behavior: "smooth" });
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
